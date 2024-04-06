@@ -4,6 +4,11 @@
       <h1>Administracion de Socios</h1>
       <button class="btn btn-success" @click="mostrarModalCreate = true"> + Nuevo Socio</button>
     </div>
+    <div id="mensajeError" style="display: none;" class="error-message">Ocurrio un error.</div>
+    <div id="mensajeDelete" style="display: none;" class="error-message">Socio eliminado con exito!</div>
+    <div id="mensajeExito" style="display: none;" class="success-message">Socio creado con exito!</div>
+    <div id="mensajeUpdate" style="display: none;" class="success-message">Socio actualizado con exito!</div>
+    <br>
     <table id="tablaSocios" style="margin-bottom: 10px; margin-top: 10px;">
       <thead>
         <tr>
@@ -15,7 +20,7 @@
           <th>Sede</th>
           <th>Precio</th>
           <th>Ultimo Pago</th>
-          <th>Expiracion</th>
+          <th>Expiración</th>
           <th>Activo</th>
           <th>Editar</th>
           <th>Eliminar</th>
@@ -104,10 +109,10 @@
                 <input type="text" id="price" v-model="socioEditado.price">
 
                 <label for="last_pay">Fecha Último Pago:</label>
-                <input type="text" id="last_pay" v-model="socioEditado.last_pay">
+                <input type="text" id="last_pay" v-model="socioEditado.last_pay" placeholder="Ejemplo: 2024-03-23">
 
                 <label for="expiration">Fecha Vencimiento:</label>
-                <input type="text" id="expiration" v-model="socioEditado.expiration">
+                <input type="text" id="expiration" v-model="socioEditado.expiration" placeholder="Ejemplo: 2024-03-23">
               </div>
             </form>
           </div>
@@ -190,7 +195,7 @@ import 'datatables.net';
 export default {
   data() {
     return {
-      socios: [], // Array para almacenar los datos de los socios obtenidos de la API
+      socios: [],
       mostrarModal: false,
       mostrarModalCreate: false,
       mostrarModalDelete: false,
@@ -205,19 +210,14 @@ export default {
         last_pay: '',
         expiration: '',
       },
+      exito: false
     };
   },
   mounted() {
-    // Llamar a un método para obtener los socios al cargar el componente
     this.getSocios();
   },
   methods: {
     getSocios() {
-      // Llamar a la API para obtener los socios
-      // Aquí puedes usar Axios u otra librería para hacer la solicitud HTTP
-      // En este ejemplo, asumimos que se obtiene la lista de socios desde una API
-      // Puedes reemplazar esta lógica con la llamada a tu propia API
-      // Ejemplo ficticio:
       axios.get('http://localhost:8080/api/socios/get')
         .then(response => {
           this.socios = response.data.socios;
@@ -235,59 +235,68 @@ export default {
         });
     },
     crearSocio() {
-      // Enviar una solicitud POST a la ruta correspondiente en tu API para crear un nuevo socio
       axios.post('http://localhost:8080/api/socios/create', this.socioEditado)
         .then(response => {
-          this.getSocios();
+          this.mostrarMensajeExito();
+          this.exito = true;
         })
         .catch(error => {
-          console.error('Error al crear socio:', error);
-          // Manejar el error según sea necesario
+          this.mostrarMensajeError();
+          this.exito = false;
         })
         .finally(() => {
-          this.mostrarModalCreate = false; // Cerrar el modal después de crear el socio
-          window.location.reload();
+          this.mostrarModalCreate = false;
+          if (this.exito) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
         });
     },
-    // Método para abrir el modal de edición
     editarSocio(socio) {
         this.mostrarModal = true;
-        // Copiar datos del socio seleccionado al socioEditado
         this.socioEditado = { ...socio };
       },
       eliminarSocio(socio) {
         this.mostrarModalDelete = true;
-        // Copiar datos del socio seleccionado al socioEditado
         this.socioEditado = { ...socio };
       },
-      // Método para cancelar la edición y cerrar el modal
       actualizarSocio() {
       axios.put(`http://localhost:8080/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)
         .then(response => {
-          console.log('Socio actualizado:', response.data.socio);
+          this.mostrarMensajeUpdate();
+          this.exito = true;
         })
         .catch(error => {
-          console.error('Error al actualizar socio:', error);
-          // Manejar el error según sea necesario
+          this.mostrarMensajeError();
+          this.exito = false;
         })
         .finally(() => {
-          this.mostrarModal = false; // Cerrar el modal después de actualizar
-          window.location.reload();
+          this.mostrarModal = false;
+          if (this.exito) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
         });      
     },
     deleteSocio(id) {
       axios.delete(`http://localhost:8080/api/socios/delete/${this.socioEditado.id}`)
       .then(response => {
-          // Actualizar la lista de socios después de eliminar
-          this.getSocios();
+        this.mostrarMensajeDelete();
+          this.exito = true;
         })
         .catch(error => {
-          // Manejar errores en la solicitud de eliminación
-          console.error('Error al eliminar socio:', error);
+          this.mostrarMensajeError();
+          this.exito = false;
         })
         .finally(() => {
-          this.mostrarModalDelete = false; // Cerrar el modal después de actualizar
-          window.location.reload();
+          this.mostrarModalDelete = false;
+          if (this.exito) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
         });      
     },
     cancelarEdicion() {
@@ -298,7 +307,31 @@ export default {
     logout(){
       localStorage.clear();
       this.$router.push({ path: '/' });
-    }
+    },
+    mostrarMensajeError() {
+      document.getElementById('mensajeError').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensajeError').style.display = 'none';
+      }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
+    mostrarMensajeExito() {
+      document.getElementById('mensajeExito').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensajeExito').style.display = 'none';
+      }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
+    mostrarMensajeUpdate() {
+      document.getElementById('mensajeUpdate').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensajeUpdate').style.display = 'none';
+      }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
+    mostrarMensajeDelete() {
+      document.getElementById('mensajeDelete').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensajeDelete').style.display = 'none';
+      }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
   },
 };
 </script>
@@ -367,4 +400,19 @@ th {
   margin-bottom: 20px;
 }
 
+.error-message {
+  background-color: #ffcccc;
+  color: #ff0000;
+  padding: 10px;
+  border: 1px solid #ff0000;
+  border-radius: 5px;
+}
+
+.success-message {
+  background-color: #ccffd7;
+  color: green;
+  padding: 10px;
+  border: 1px solid #00ff22;
+  border-radius: 5px;
+}
 </style>

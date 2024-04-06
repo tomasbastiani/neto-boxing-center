@@ -14,16 +14,13 @@
           <!-- Datos de contacto a la derecha -->
           <div class="col-md-6 text-right">
             <div>
-              <strong>Dirección:</strong> Tu Dirección
+              <strong>Dirección:</strong> Av. Diaz Velez 5204 - Av. Gaona 1880
             </div>
             <div>
-              <strong>Teléfono:</strong> Tu Teléfono
+              <strong>Teléfono:</strong> 11 5052-4048
             </div>
             <div>
-              <strong>Email:</strong> tu@email.com
-            </div>
-            <div>
-              <strong>Horario:</strong> Lunes a Viernes, 9:00 AM - 5:00 PM
+              <strong>Horario:</strong> Lunes a Sábados
             </div>
           </div>
         </div>

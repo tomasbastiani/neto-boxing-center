@@ -41,11 +41,9 @@
 export default {
   name: 'NavBar',
   created() {
-    console.log(this.$route.path);
   },
   methods: {
     toLogin() {
-      console.log(this.$router.options.routes);
         // this.$router.push({ LoginComponent });
         let currentRoute = this.$route.path;
         if (currentRoute !== '/login') {
