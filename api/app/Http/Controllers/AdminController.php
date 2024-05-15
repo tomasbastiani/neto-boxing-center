@@ -11,7 +11,7 @@ class AdminController extends Controller
     public function get_socios()
     {
         $socios = DB::table('socios')
-        ->orderByDesc('id')
+        ->orderBy('id', 'asc')
         ->get();
 
         return response()->json(['socios' => $socios]);

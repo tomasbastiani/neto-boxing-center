@@ -1,10 +1,10 @@
 import Vue from 'vue';
 import App from './App.vue';
-import router from './router'; // Importa tu archivo de enrutador
+import router from './router';
 
 Vue.config.productionTip = false;
 
 new Vue({
-  router, // Usa el enrutador en la instancia de Vue
+  router,
   render: h => h(App),
 }).$mount('#app');

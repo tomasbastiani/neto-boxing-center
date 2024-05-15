@@ -5,7 +5,7 @@
       <button class="btn btn-success" @click="mostrarModalCreate = true"> + Nuevo Socio</button>
     </div>
     <div id="mensajeError" style="display: none;" class="error-message">Ocurrio un error.</div>
-    <div id="mensajeDelete" style="display: none;" class="error-message">Socio eliminado con exito!</div>
+    <div id="mensajeDelete" style="display: none;" class="success-message">Socio eliminado con exito!</div>
     <div id="mensajeExito" style="display: none;" class="success-message">Socio creado con exito!</div>
     <div id="mensajeUpdate" style="display: none;" class="success-message">Socio actualizado con exito!</div>
     <br>
@@ -21,7 +21,8 @@
           <th>Precio</th>
           <th>Ultimo Pago</th>
           <th>Expiración</th>
-          <th>Activo</th>
+          <th>Estado</th>
+          <th>Vence en</th>
           <th>Editar</th>
           <th>Eliminar</th>
         </tr>
@@ -35,10 +36,11 @@
           <td>{{ socio.telefono }}</td>
           <td>{{ socio.email }}</td>
           <td>{{ socio.sede }}</td>
-          <td>{{ socio.price }}</td>
+          <td>$ {{ socio.price }}</td>
           <td>{{ socio.last_pay }}</td>
-          <td>{{ socio.expiration }}</td>
-          <td>{{ socio.activo }}</td>
+          <td :class="{ 'expiring': !socio.isExpiring, 'notExpiring': socio.isExpiring  }">{{ socio.expiration }}</td>
+          <td :class="{ 'expiring': !socio.isExpiring, 'notExpiring': socio.isExpiring  }">{{ socio.isExpiring ? 'Activo' : 'Vencido' }}</td>
+          <td :class="{ 'expiring': !socio.isExpiring, 'notExpiring': socio.isExpiring  }">{{ calcularDiasParaVencimiento(socio.expiration) }} Dias</td>
           <td>
             <img src="@/assets/edit_button.png" alt="Editar" @click="editarSocio(socio)">
           </td>
@@ -73,15 +75,15 @@
         <div class="custom-modal-content">
           <!-- Encabezado del modal -->
           <div class="modal-header">
-            <h5 class="modal-title">Editar Socio</h5>
+            <h5 class="modal-title">Crear Socio</h5>
             <button type="button" class="close" @click="cancelarEdicion">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
 
-          <!-- Contenido del modal (formulario de edición) -->
+          <!-- Contenido del modal (formulario de creacion) -->
           <div class="modal-body">
-            <form @submit.prevent="actualizarSocio" class="form-columns">
+            <form @submit.prevent="crearSocio" class="form-columns">
               <!-- Columna izquierda -->
               <div class="form-column">
                 <label for="dni">DNI:</label>
@@ -95,6 +97,9 @@
 
                 <label for="telefono">Teléfono:</label>
                 <input type="text" id="telefono" v-model="socioEditado.telefono">
+
+                <!-- <label for="telefono">Activo:</label>
+                <input type="text" id="telefono" v-model="socioEditado.activo"> -->
               </div>
 
               <!-- Columna derecha -->
@@ -109,10 +114,10 @@
                 <input type="text" id="price" v-model="socioEditado.price">
 
                 <label for="last_pay">Fecha Último Pago:</label>
-                <input type="text" id="last_pay" v-model="socioEditado.last_pay" placeholder="Ejemplo: 2024-03-23">
+                <input type="date" id="expiration" v-model="socioEditado.last_pay" placeholder="Seleccione fecha">
 
                 <label for="expiration">Fecha Vencimiento:</label>
-                <input type="text" id="expiration" v-model="socioEditado.expiration" placeholder="Ejemplo: 2024-03-23">
+                <input type="date" id="expiration" v-model="socioEditado.expiration" placeholder="Seleccione fecha">
               </div>
             </form>
           </div>
@@ -150,6 +155,9 @@
 
                 <label for="telefono">Teléfono:</label>
                 <input type="text" id="telefono" v-model="socioEditado.telefono">
+                
+                <!-- <label for="telefono">¿Activo?:</label>
+                <input type="text" id="telefono" v-model="socioEditado.activo"> -->
               </div>
 
               <!-- Columna derecha -->
@@ -164,10 +172,10 @@
                 <input type="text" id="price" v-model="socioEditado.price">
 
                 <label for="last_pay">Fecha Último Pago:</label>
-                <input type="text" id="last_pay" v-model="socioEditado.last_pay">
+                <input type="date" id="expiration" v-model="socioEditado.last_pay" placeholder="Seleccione fecha">
 
                 <label for="expiration">Fecha Vencimiento:</label>
-                <input type="text" id="expiration" v-model="socioEditado.expiration">
+                <input type="date" id="expiration" v-model="socioEditado.expiration" placeholder="Seleccione fecha">
               </div>
             </form>
           </div>
@@ -209,18 +217,32 @@ export default {
         sede: '',
         last_pay: '',
         expiration: '',
+        activo: ''
       },
-      exito: false
+      exito: false,
+      filtroActivo: '',
+      sociosFiltrados: [],
     };
   },
   mounted() {
     this.getSocios();
   },
   methods: {
+    calcularDiasParaVencimiento(fechaExpiracion) {
+      const expiracion = new Date(fechaExpiracion);
+      const hoy = new Date();
+      const diferenciaEnTiempo = expiracion.getTime() - hoy.getTime();
+      const diferenciaEnDias = Math.ceil(diferenciaEnTiempo / (1000 * 3600 * 24));
+      return diferenciaEnDias;
+    },
     getSocios() {
       axios.get('http://localhost:8080/api/socios/get')
         .then(response => {
-          this.socios = response.data.socios;
+          this.socios = response.data.socios.map(socio => {
+            socio.isExpiring = new Date(socio.expiration) > new Date();
+            return socio;
+          });
+          console.log('this.socios',this.socios);
           this.$nextTick(() => {
             $('#tablaSocios').DataTable({
               searching: true,
@@ -295,7 +317,7 @@ export default {
           if (this.exito) {
             setTimeout(() => {
               window.location.reload();
-            }, 1500);
+            }, 1000);
           }
         });      
     },
@@ -333,6 +355,18 @@ export default {
       }, 5000); // Ocultar el mensaje después de 5 segundos
     },
   },
+  // computed: {
+  //   // Utiliza una computed property para filtrar los socios según el filtro seleccionado
+  //   sociosFiltrados() {
+  //     if (this.filtroActivo === '') {
+  //       // Si no se ha seleccionado ningún filtro, devuelve todos los socios
+  //       return this.socios;
+  //     } else {
+  //       // Filtra los socios según el estado seleccionado
+  //       return this.socios.filter(socio => socio.activo === this.filtroActivo);
+  //     }
+  //   }
+  // },
 };
 </script>
 
@@ -415,4 +449,13 @@ th {
   border: 1px solid #00ff22;
   border-radius: 5px;
 }
+
+.expiring {
+  background-color: #ff0000;
+}
+
+.notExpiring{
+  background-color: #00ff22;
+}
+
 </style>

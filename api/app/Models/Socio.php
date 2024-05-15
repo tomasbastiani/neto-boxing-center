@@ -17,7 +17,8 @@ class Socio extends Model
         'sede',
         'price',
         'last_pay',
-        'expiration'
+        'expiration',
+        'activo'
     ];
 
     protected $attributes = [
@@ -29,7 +30,8 @@ class Socio extends Model
         'sede' => '',
         'price' => '',
         'last_pay' => '',
-        'expiration' => ''
+        'expiration' => '',
+        'activo' => ''
     ];
     public $timestamps = false;
 }
