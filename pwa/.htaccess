@@ -1,0 +1,14 @@
+# RewriteEngine On habilita el motor de reescritura de Apache
+RewriteEngine On
+
+# Redirigir todas las solicitudes a archivos o directorios existentes
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+RewriteRule ^ - [L]
+
+# Redirigir las solicitudes a la carpeta api
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ api/public/$1 [L]
+
+# Redirigir todas las demбs solicitudes a index.html
+RewriteRule ^ index.html [L]

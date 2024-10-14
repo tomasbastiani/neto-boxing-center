@@ -36,6 +36,7 @@ Route::get('/socios/get', [AdminController::class, "get_socios"]);
 Route::post('/socios/create', [AdminController::class, "create"]);
 Route::put('/socios/edit/{id}', [AdminController::class, "edit"]);
 Route::delete('/socios/delete/{id}', [AdminController::class, 'delete']);
+Route::get('/socios/expiracion', [AdminController::class, 'get_expirations']);
 Route::middleware('auth')->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
     // Otras rutas protegidas bajo /admin

@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('CORS_ALLOWED_URL', 'http://localhost:8081')],
+    'allowed_origins' => [env('CORS_ALLOWED_URL', 'https://localhost:8081'), 'https://netoboxingcenter.com.ar'],
 
     'allowed_origins_patterns' => [],
 

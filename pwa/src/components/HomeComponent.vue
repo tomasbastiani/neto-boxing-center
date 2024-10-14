@@ -18,6 +18,7 @@
   
     h1 {
         font-family: 'Bebas Neue', sans-serif;
+        color: rgb(175, 181, 0);
     }
   .home {
     background-image: url(../assets/img/fondo5.jpg);

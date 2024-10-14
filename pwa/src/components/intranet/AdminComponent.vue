@@ -5,11 +5,30 @@
       <button class="btn btn-success" @click="mostrarModalCreate = true"> + Nuevo Socio</button>
     </div>
     <div id="mensajeError" style="display: none;" class="error-message">Ocurrio un error.</div>
+    <div id="mensajeErrorDNI" style="display: none;" class="error-message">El DNI ya se encuentra registrado.</div>
     <div id="mensajeDelete" style="display: none;" class="success-message">Socio eliminado con exito!</div>
     <div id="mensajeExito" style="display: none;" class="success-message">Socio creado con exito!</div>
     <div id="mensajeUpdate" style="display: none;" class="success-message">Socio actualizado con exito!</div>
     <br>
-    <table id="tablaSocios" style="margin-bottom: 10px; margin-top: 10px;">
+    <div id="busquedaSocio">
+      <h2>Acceso Socio</h2>
+      <br>
+      <input v-focus v-model="searchDNI" @keypress="handleKeyPress" placeholder="INGRESAR DNI" />
+      <br>
+      <button @click="buscarPorDNI">Ingresar</button>
+    </div>
+
+    <br>
+    <div v-if="mensajeError" class="error-message">{{ mensajeError }}</div>
+    <br>
+    <!-- display: none; -->
+    <button style="margin-left: 10px;" class="btn btn-success" @click="mostrarTablaSocios">Ver Tabla Socios</button>
+    <br>
+    <br>
+    <button v-if="tablaSociosMostrar" style="margin-left: 10px;" class="btn btn-danger" @click="ocultarTablaSocios">Ocultar Tabla Socios</button>
+    <br>
+    <br>
+    <table id="tablaSocios" style="margin-bottom: 10px; margin-top: 10px; display: none;">
       <thead>
         <tr>
           <th>DNI</th>
@@ -18,7 +37,7 @@
           <th>Telefono</th>
           <th>Email</th>
           <th>Sede</th>
-          <th>Precio</th>
+          <!-- <th>Precio</th> -->
           <th>Ultimo Pago</th>
           <th>Expiración</th>
           <th>Estado</th>
@@ -36,7 +55,7 @@
           <td>{{ socio.telefono }}</td>
           <td>{{ socio.email }}</td>
           <td>{{ socio.sede }}</td>
-          <td>$ {{ socio.price }}</td>
+          <!-- <td>$ {{ socio.price }}</td> -->
           <td>{{ socio.last_pay }}</td>
           <td :class="{ 'expiring': !socio.isExpiring, 'notExpiring': socio.isExpiring  }">{{ socio.expiration }}</td>
           <td :class="{ 'expiring': !socio.isExpiring, 'notExpiring': socio.isExpiring  }">{{ socio.isExpiring ? 'Activo' : 'Vencido' }}</td>
@@ -187,7 +206,54 @@
         </div>
       </div>
       <br>
+      <!-- Modal para mostrar la información del socio -->
+      <div v-if="mostrarModalSocio" class="modalSocio">
+        <div class="modalsocio-content">
+          <span class="close" @click="cerrarModal">&times;</span>
+          <h2>Información del Socio</h2>
+          <div class="modalsocio-body">
+            <div class="modal-column">
+              <p><strong>DNI:</strong> {{ socioSeleccionado.dni }}</p>
+              <p><strong>Nombre:</strong> {{ socioSeleccionado.nombre }}</p>
+              <p><strong>Apellido:</strong> {{ socioSeleccionado.apellido }}</p>
+              <p><strong>Telefono:</strong> {{ socioSeleccionado.telefono }}</p>
+              <p><strong>Precio:</strong> $ {{ socioSeleccionado.price }}</p>
+            </div>
+            <div class="modal-column">
+              <p><strong>Email:</strong> {{ socioSeleccionado.email }}</p>
+              <p><strong>Sede:</strong> {{ socioSeleccionado.sede }}</p>
+              <p><strong>Ultimo Pago:</strong> {{ socioSeleccionado.last_pay }}</p>
+              <p>
+                <strong>Expiración:</strong> {{ socioSeleccionado.expiration }}
+              </p>
+              <p>
+                <strong>Vence en:</strong> {{ calcularDiasParaVencimiento(socioSeleccionado.expiration) }} Dias
+              </p>
+            </div>
+          </div>
+          <br>
+          <div :class="['status-bar', socioSeleccionado.isExpiring ? 'notExpiring' : 'expiring']">
+            <strong>{{ socioSeleccionado.isExpiring ? 'Activo' : 'Vencido' }}</strong>
+          </div>
+        </div>
+      </div>
     <b-button @click="logout" class="btn btn-danger btn-sm" style="margin-left: 10px;">Cerrar Sesión</b-button>
+    <div class="expiracion-container">
+        <h1>Socios con vencimiento Mañana</h1>
+        <ul v-if="sociosExpiracion.length" class="expiracion-list">
+          <li v-for="socio in sociosExpiracion" :key="socio.id" class="expiracion-item">
+              <div class="socio-info">
+                  <p><strong>DNI:</strong> {{ socio.dni }}</p>
+                  <p><strong>Nombre:</strong> {{ socio.nombre }}</p>
+                  <p><strong>Apellido:</strong> {{ socio.apellido }}</p>
+                  <p><strong>Telefono:</strong> {{ socio.telefono }}</p>
+                  <p><strong>Sede:</strong> {{ socio.sede }}</p>
+                  <p><strong>Fecha Vencimiento:</strong> {{ socio.expiration }}</p>
+              </div>
+          </li>
+        </ul>
+        <p v-else class="no-expiracion-msg">No hay socios con fechas de expiración para mañana.</p>
+    </div>
   </div>
 </template>
 
@@ -204,6 +270,10 @@ export default {
   data() {
     return {
       socios: [],
+      searchDNI: '',
+      mensajeError: '',
+      socioSeleccionado: null,
+      mostrarModalSocio: false,
       mostrarModal: false,
       mostrarModalCreate: false,
       mostrarModalDelete: false,
@@ -222,12 +292,33 @@ export default {
       exito: false,
       filtroActivo: '',
       sociosFiltrados: [],
+      tablaSociosMostrar: false,
+      sociosExpiracion: []
     };
   },
   mounted() {
     this.getSocios();
+    this.obtenerSociosConExpiracion();
+  },
+  computed: {
+    sociosFiltrados() {
+      if (this.searchDNI) {
+        return this.socios.filter(socio => socio.dni === this.searchDNI);
+      }
+      return this.socios;
+    },
   },
   methods: {
+    obtenerSociosConExpiracion() {
+      axios.get('https://netoboxingcenter.com.ar/api/socios/expiracion') // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+        .then(response => {
+          this.sociosExpiracion = response.data.sociosExpiracion;
+        })
+        .catch(error => {
+          this.mostrarMensajeError();
+          this.exito = false;
+        });
+    },
     calcularDiasParaVencimiento(fechaExpiracion) {
       const expiracion = new Date(fechaExpiracion);
       const hoy = new Date();
@@ -236,13 +327,16 @@ export default {
       return diferenciaEnDias;
     },
     getSocios() {
-      axios.get('http://localhost:8080/api/socios/get')
+      const user = sessionStorage.getItem('user');
+      if (!user) {
+        this.$router.push({ path: '/login' });
+      }else {
+      axios.get('https://netoboxingcenter.com.ar/api/socios/get')//https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
         .then(response => {
           this.socios = response.data.socios.map(socio => {
             socio.isExpiring = new Date(socio.expiration) > new Date();
             return socio;
           });
-          console.log('this.socios',this.socios);
           this.$nextTick(() => {
             $('#tablaSocios').DataTable({
               searching: true,
@@ -255,24 +349,91 @@ export default {
         .catch(error => {
           console.error('Error obteniendo socios:', error);
         });
+      }
     },
+    buscarPorDNI() {
+      this.mensajeError = '';
+      const socioEncontrado = this.socios.find(socio => socio.dni === this.searchDNI);
+      if (!socioEncontrado) {
+        this.mensajeError = 'No hay usuarios registrados con ese DNI';
+        this.mostrarModalSocio = false;
+        setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+      } else {
+        this.socioSeleccionado = socioEncontrado;
+        this.mostrarModalSocio = true;
+        setTimeout(() => {
+          this.mostrarModalSocio = false;
+          this.searchDNI = '';
+      }, 4000); // Ocultar el mensaje después de 5 segundos
+      }
+    },
+    cerrarModal() {
+      this.mostrarModalSocio = false;
+      console.log(this.mostrarModalSocio);
+      this.searchDNI = '';
+    },
+    handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        this.buscarPorDNI();
+      } else if (event.key === 'Escape') {
+        this.cerrarModal();
+      }
+    },
+    // crearSocio() {
+    //   axios.post('http://localhost:8080/api/socios/create', this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+    //     .then(response => {
+    //       this.mostrarMensajeExito();
+    //       this.exito = true;
+    //     })
+    //     .catch(error => {
+    //       this.mostrarMensajeError();
+    //       this.exito = false;
+    //     })
+    //     .finally(() => {
+    //       this.mostrarModalCreate = false;
+    //       if (this.exito) {
+    //         setTimeout(() => {
+    //           window.location.reload();
+    //         }, 1500);
+    //       }
+    //     });
+    // },
     crearSocio() {
-      axios.post('http://localhost:8080/api/socios/create', this.socioEditado)
-        .then(response => {
-          this.mostrarMensajeExito();
-          this.exito = true;
+        axios.get('https://netoboxingcenter.com.ar/api/socios/get') // https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
+          .then(response => {
+            const existeSocio = response.data.socios.some(socio => socio.dni === this.socioEditado.dni);
+            console.log('existeSocio', existeSocio);
+            if (existeSocio) {
+              this.exito = false;
+              this.mostrarModalCreate = false;
+              this.mostrarMensajeErrorDni();
+              return;
+            }
+          
+        axios.post('https://netoboxingcenter.com.ar/api/socios/create', this.socioEditado) // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+          .then(response => {
+            this.mostrarMensajeExito();
+            this.exito = true;
+          })
+          .catch(error => {
+            this.mostrarMensajeError();
+            this.exito = false;
+          })
+          .finally(() => {
+            this.mostrarModalCreate = false;
+            if (this.exito) {
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            }
+          });
         })
         .catch(error => {
-          this.mostrarMensajeError();
+          this.mostrarMensajeError('Error al verificar el DNI');
+          console.error('Error obteniendo socios:', error);
           this.exito = false;
-        })
-        .finally(() => {
-          this.mostrarModalCreate = false;
-          if (this.exito) {
-            setTimeout(() => {
-              window.location.reload();
-            }, 1500);
-          }
         });
     },
     editarSocio(socio) {
@@ -284,7 +445,7 @@ export default {
         this.socioEditado = { ...socio };
       },
       actualizarSocio() {
-      axios.put(`http://localhost:8080/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)
+      axios.put(`https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}
         .then(response => {
           this.mostrarMensajeUpdate();
           this.exito = true;
@@ -303,7 +464,7 @@ export default {
         });      
     },
     deleteSocio(id) {
-      axios.delete(`http://localhost:8080/api/socios/delete/${this.socioEditado.id}`)
+      axios.delete(`https://netoboxingcenter.com.ar/api/socios/delete/${this.socioEditado.id}`)//https://netoboxingcenter.com.ar/api/socios/delete/${this.socioEditado.id}
       .then(response => {
         this.mostrarMensajeDelete();
           this.exito = true;
@@ -327,7 +488,7 @@ export default {
       this.mostrarModalDelete = false;
     },
     logout(){
-      localStorage.clear();
+      sessionStorage.removeItem('user');
       this.$router.push({ path: '/' });
     },
     mostrarMensajeError() {
@@ -354,19 +515,27 @@ export default {
         document.getElementById('mensajeDelete').style.display = 'none';
       }, 5000); // Ocultar el mensaje después de 5 segundos
     },
-  },
-  // computed: {
-  //   // Utiliza una computed property para filtrar los socios según el filtro seleccionado
-  //   sociosFiltrados() {
-  //     if (this.filtroActivo === '') {
-  //       // Si no se ha seleccionado ningún filtro, devuelve todos los socios
-  //       return this.socios;
-  //     } else {
-  //       // Filtra los socios según el estado seleccionado
-  //       return this.socios.filter(socio => socio.activo === this.filtroActivo);
-  //     }
-  //   }
-  // },
+    mostrarMensajeErrorDni() {
+      document.getElementById('mensajeErrorDNI').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensajeErrorDNI').style.display = 'none';
+      }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
+    mostrarTablaSocios() {
+      const tabla = document.getElementById('tablaSocios');
+      if (tabla) {
+        tabla.style.display = '';
+        tabla.style.width = '100%';
+      }
+      this.tablaSociosMostrar = true;
+    },
+    ocultarTablaSocios(){
+      const tabla = document.getElementById('tablaSocios');
+      if (tabla) {
+        tabla.style.display = 'none';
+      }
+    }
+  }
 };
 </script>
 
@@ -376,6 +545,10 @@ export default {
 table {
   width: 100%;
   border-collapse: collapse;
+}
+
+#tablaSocios{
+  width: 100%;
 }
 
 th, td {
@@ -457,5 +630,183 @@ th {
 .notExpiring{
   background-color: #00ff22;
 }
+
+.modalSocio {
+  display: block;
+  position: fixed;
+  z-index: 1; 
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; 
+  background-color: rgb(0,0,0); 
+  background-color: rgba(0,0,0,0.4); 
+}
+.modalsocio-content {
+  background-color: #E2E2E2;
+  margin: 10% auto; 
+  padding: 20px;
+  border: 1px solid #888;
+  width: 70%;
+  height: 65%;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+.modalsocio-body {
+  font-size: large;
+  display: flex;
+  justify-content: space-between;
+}
+.modal-column {
+  width: 50%;
+}
+.status-bar {
+  text-align: center;
+  font-size: 30px;
+  padding: 10px;
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+}
+.expiring.status-bar {
+  background-color: red;
+  color: black;
+  margin-right: auto;
+  margin-left: auto;
+}
+.notExpiring.status-bar {
+  background-color: green;
+  color: black;
+  margin-right: auto;
+  margin-left: auto;
+}
+#busquedaSocio {
+  border: solid 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60%;
+  height: 50vh;
+  background-color: #CED800;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+#busquedaSocio input {
+  width: 200px; /* Tamaño deseado */
+  height: 40px; /* Altura deseada */
+  font-size: 16px; /* Tamaño de fuente deseado */
+  margin-bottom: 10px; /* Espaciado entre el input y el botón */
+  color: white;
+  background-color: black;
+}
+
+#busquedaSocio button {
+  width: 100px; /* Tamaño deseado */
+  height: 40px; /* Altura deseada */
+  font-size: 16px; /* Tamaño de fuente deseado */
+  color: white;
+  background-color: black;
+}
+#busquedaSocio input::placeholder {
+  text-align: center;
+  color: white; /* Color del texto del placeholder */
+}
+#busquedaSocio img {
+  align-self: flex-start; /* Ubica la imagen a la izquierda */
+  margin-left: 10px; /* Opcional: Espaciado desde el borde izquierdo */
+}
+
+.expiracion-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.expiracion-list {
+    list-style: none;
+    padding: 0;
+}
+
+.expiracion-item {
+    background-color: #F9FF79;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    padding: 15px;
+    transition: transform 0.2s ease;
+}
+
+.expiracion-item:hover {
+    transform: translateY(-3px);
+}
+
+.socio-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.socio-info p {
+    margin: 5px 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+.socio-info strong {
+    color: #000;
+}
+
+.no-expiracion-msg {
+    text-align: center;
+    color: #ff4c4c;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+/* Responsivo */
+@media (max-width: 600px) {
+    .expiracion-container {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .expiracion-item {
+        padding: 10px;
+    }
+
+    .socio-info p {
+        font-size: 0.9rem;
+    }
+}
+
+
 
 </style>

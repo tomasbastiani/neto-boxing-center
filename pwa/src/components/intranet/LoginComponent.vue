@@ -21,6 +21,7 @@
               <!-- Botón de iniciar sesión -->
               <button type="button" class="btn btn-primary" @click="login">Iniciar Sesión</button>
             </form>
+            <div v-if="errorMessage" style="color: red;">Credenciales inválidas</div>
           </div>
         </div>
       </div>
@@ -38,6 +39,7 @@ export default {
     return {
       username: '',
       password: '',
+      errorMessage: ''
     };
   },
   methods: {
@@ -45,19 +47,18 @@ export default {
       // Datos de inicio de sesión
       const credentials = {
         username: this.username,
-        password: this.password
+        password: this.password,
       };
 
-      axios.post('http://localhost:8080/api/login', credentials)
+      axios.post('https://netoboxingcenter.com.ar/api/login', credentials)//https://netoboxingcenter.com.ar/api/login http://localhost:8080
         .then(response => {
-          let currentRoute = this.$route.path;
-          // Manejar la respuesta del servidor aquí
+          // let currentRoute = this.$route.path;
           console.log(response.data);
-          if (currentRoute !== '/admin') {
-            this.$router.push({ path: '/admin' });
-          }
+          sessionStorage.setItem('user', this.username);
+          this.$router.push({ path: '/admin' });
         })
         .catch(error => {
+          this.errorMessage = true;
           // Manejar errores de la solicitud aquí
           if (error.response) {
             // La solicitud fue hecha, pero el servidor respondió con un código de estado fuera del rango 2xx

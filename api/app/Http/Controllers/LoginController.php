@@ -34,11 +34,15 @@ class LoginController extends Controller
                 if ($request->password == $user->password) {
                     Log::info('Inicio de sesión exitoso para el usuario: ' . $request->username);
                     return response()->json(['success' => 'Credenciales correctas']);
+                } else {
+                    Log::warning('Intento de inicio de sesión fallido para el usuario: ' . $request->username);
+                    return response()->json(['error' => 'Los datos introducidos no son correctos'], 401);
                 }
+            } else {
+                Log::warning('Intento de inicio de sesión fallido para el usuario: ' . $request->username);
+                return response()->json(['error' => 'Los datos introducidos no son correctos'], 401);
             }
 
-            Log::warning('Intento de inicio de sesión fallido para el usuario: ' . $request->username);
-            return redirect("/")->withSuccess('Los datos introducidos no son correctos');
         } catch (\Exception $e) {
             Log::error('Error durante el proceso de inicio de sesión: ' . $e->getMessage());
             return response()->json(['error' => 'Error en el servidor'], 500);
