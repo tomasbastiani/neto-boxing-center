@@ -41,4 +41,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
     // Otras rutas protegidas bajo /admin
 });
+Route::post('/socios/enviar-aviso-email', [AdminController::class, 'enviarAvisoEmail']);
 // Route::middleware('auth:sanctum')->post("/admin", [AdminController::class, "admin"]);

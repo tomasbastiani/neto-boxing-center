@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Socio;
 use Carbon\Carbon;
+use App\Mail\AvisoExpiracion;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+
 
 class AdminController extends Controller
 {
@@ -67,5 +71,45 @@ class AdminController extends Controller
             'fechaLimite' => $fechaLimite, // Imprime la variable $fechaLimite
             'sociosExpiracion' => $sociosExpiracion
         ]);
+    }
+
+    public function get_expirations1()
+    {
+        // Obtén la fecha de hoy y añade un día
+        // $fechaLimite = Carbon::now()->addDay()->toDateString(); // Esto te dará '2024-10-04' si hoy es '2024-10-03'
+        $fechaLimite = Carbon::now()->subHours(3)->addDay()->toDateString();
+
+        // Realiza la consulta para obtener los socios cuya fecha de expiración es igual a la fecha límite
+        $sociosExpiracion = Socio::where('expiration', $fechaLimite)->get();
+
+        foreach ($sociosExpiracion as $socio) {
+            // Llama a la función enviarAvisoEmail y pasa el socio actual
+            $this->enviarAvisoEmail($socio);
+        }
+
+        // Devuelve la vista con los datos
+        return response()->json([
+            'message' => 'Socios que expiran pronto',
+            'fechaLimite' => $fechaLimite, // Imprime la variable $fechaLimite
+            'sociosExpiracion' => $sociosExpiracion
+        ]);
+    }
+
+    public function enviarAvisoEmail($socio)
+    {
+        // Asegúrate de que $socio tenga los campos necesarios
+        $data = [
+            'nombre' => $socio->nombre, // Asegúrate de que este campo exista en tu modelo Socio
+            'email' => $socio->email
+        ];
+
+        try {
+            Mail::to($data['email'])->send(new AvisoExpiracion($data));
+            Log::info("Email enviado a {$data['email']} para {$data['nombre']}"); // Log de éxito
+            return response()->json(['success' => true], 200);
+        } catch (\Exception $e) {
+            Log::error("Error al enviar email a {$data['email']}: " . $e->getMessage()); // Log de error
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

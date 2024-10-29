@@ -247,6 +247,7 @@
                   <p><strong>Nombre:</strong> {{ socio.nombre }}</p>
                   <p><strong>Apellido:</strong> {{ socio.apellido }}</p>
                   <p><strong>Telefono:</strong> {{ socio.telefono }}</p>
+                  <p><strong>Email:</strong> {{ socio.email }}</p>
                   <p><strong>Sede:</strong> {{ socio.sede }}</p>
                   <p><strong>Fecha Vencimiento:</strong> {{ socio.expiration }}</p>
               </div>
@@ -310,9 +311,18 @@ export default {
   },
   methods: {
     obtenerSociosConExpiracion() {
-      axios.get('https://netoboxingcenter.com.ar/api/socios/expiracion') // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+      axios.get('http://localhost:8080/api/socios/expiracion') // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
         .then(response => {
           this.sociosExpiracion = response.data.sociosExpiracion;
+          // if (Array.isArray(this.sociosExpiracion)) {
+          //   this.sociosExpiracion.forEach(socio => {
+          //     if (socio.email) {
+          //       this.enviarAvisoEmail(socio);
+          //     }
+          //   });
+          // } else {
+          //   console.error('La respuesta no contiene un array válido de socios');
+          // }
         })
         .catch(error => {
           this.mostrarMensajeError();
@@ -325,6 +335,18 @@ export default {
       const diferenciaEnTiempo = expiracion.getTime() - hoy.getTime();
       const diferenciaEnDias = Math.ceil(diferenciaEnTiempo / (1000 * 3600 * 24));
       return diferenciaEnDias;
+    },
+    enviarAvisoEmail(socio) {
+      axios.post('https://netoboxingcenter.com.ar/api/socios/enviar-aviso-email', { // https://netoboxingcenter.com.ar/api/socios/enviar-aviso-email http://localhost:8080
+        nombre: socio.nombre,
+        email: socio.email
+      })
+      .then(() => {
+        console.log(`Email enviado a ${socio.nombre}`);
+      })
+      .catch(error => {
+        console.error(`Error al enviar email a ${socio.nombre}:`, error);
+      });
     },
     getSocios() {
       const user = sessionStorage.getItem('user');
