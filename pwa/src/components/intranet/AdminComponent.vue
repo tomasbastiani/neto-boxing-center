@@ -353,7 +353,7 @@ export default {
       if (!user) {
         this.$router.push({ path: '/login' });
       }else {
-      axios.get('https://netoboxingcenter.com.ar/api/socios/get')//https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
+      axios.get('http://localhost:8080/api/socios/get')//https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
         .then(response => {
           this.socios = response.data.socios.map(socio => {
             socio.isExpiring = new Date(socio.expiration) > new Date();
@@ -467,7 +467,7 @@ export default {
         this.socioEditado = { ...socio };
       },
       actualizarSocio() {
-      axios.put(`https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}
+      axios.put(`http://localhost:8080/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}
         .then(response => {
           this.mostrarMensajeUpdate();
           this.exito = true;
