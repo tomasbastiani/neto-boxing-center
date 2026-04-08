@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use App\Mail\AvisoExpiracion;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\Ingreso;
 
 class AdminController extends Controller
 {
@@ -112,4 +112,24 @@ class AdminController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function ingresos(Request $request)
+    {
+        try {
+            DB::table('ingresos')->insert([
+                'dni' => $request->dni,
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'sede' => $request->sede,
+                'last_pay' => $request->last_pay,
+                'expiration' => $request->expiration,
+                'fecha_ingreso' => Carbon::now()->subHours(3),
+            ]);
+
+            return response()->json(['message' => 'Ingreso registrado correctamente'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al registrar ingreso', 'details' => $e->getMessage()], 500);
+        }
+    }
+
 }

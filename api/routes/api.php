@@ -43,3 +43,7 @@ Route::middleware('auth')->group(function () {
 });
 Route::post('/socios/enviar-aviso-email', [AdminController::class, 'enviarAvisoEmail']);
 // Route::middleware('auth:sanctum')->post("/admin", [AdminController::class, "admin"]);
+Route::post('/socios/ingresos', [AdminController::class, "ingresos"]);
+Route::get('/socios/get_ingresos', function () {
+    return DB::table('ingresos')->orderBy('fecha_ingreso', 'desc')->get();
+});
