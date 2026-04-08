@@ -50,7 +50,7 @@ export default {
         password: this.password,
       };
 
-      axios.post('http://localhost:8080/api/login', credentials)//https://netoboxingcenter.com.ar/api/login http://localhost:8080
+      axios.post('https://netoboxingcenter.com.ar/api/login', credentials)//https://netoboxingcenter.com.ar/api/login http://localhost:8080
         .then(response => {
           // let currentRoute = this.$route.path;
           console.log(response.data);

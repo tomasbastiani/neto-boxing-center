@@ -18,12 +18,12 @@
           <li class="nav-item">
             <router-link to="/" class="nav-link text-light">Inicio</router-link>
           </li>
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <router-link to="/about" class="nav-link text-light">Acerca de</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/services" class="nav-link text-light">Servicios</router-link>
-          </li>
+          </li> -->
           <li class="nav-item">
             <a class="nav-link text-light" href="https://api.whatsapp.com/send?phone=1150524048" target="_blank">Contactanos</a>
           </li>
