@@ -10,6 +10,7 @@ use App\Mail\AvisoExpiracion;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Models\Ingreso;
+use Illuminate\Support\Facades\Http;
 
 class AdminController extends Controller
 {
@@ -129,6 +130,71 @@ class AdminController extends Controller
             return response()->json(['message' => 'Ingreso registrado correctamente'], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al registrar ingreso', 'details' => $e->getMessage()], 500);
+        }
+    }
+    public function enviarAvisoWhatsapp(Request $request)
+    {
+        $socioId = $request->input('id');
+        $socio = Socio::find($socioId);
+
+        if (!$socio) {
+            return response()->json(['error' => 'Socio no encontrado'], 404);
+        }
+
+        if (!$socio->telefono) {
+            return response()->json(['error' => 'El socio no tiene un número de teléfono cargado'], 400);
+        }
+
+        // Limpiar el teléfono de espacios, guiones o caracteres raros
+        $telefonoStr = preg_replace('/[^0-9]/', '', $socio->telefono);
+        
+        // Agregar +549 si el número no empieza con ese prefijo
+        if (substr($telefonoStr, 0, 3) !== '549') {
+            if (substr($telefonoStr, 0, 2) === '54') {
+                // si ya tiene 54 pero no 9, reemplazamos 54 por 549
+                $telefonoStr = preg_replace('/^54/', '549', $telefonoStr);
+            } else {
+                // sacar ceros (011 -> 11) o 15 inicial si hubiere
+                if (str_starts_with($telefonoStr, '0')) {
+                    $telefonoStr = substr($telefonoStr, 1);
+                }
+                if (str_starts_with($telefonoStr, '15')) {
+                    $telefonoStr = substr($telefonoStr, 2);
+                }
+                $telefonoStr = '549' . $telefonoStr;
+            }
+        }
+
+        $telefono = $telefonoStr . "@c.us"; // Green API requiere el sufijo @c.us
+
+        try {
+            $instance = config('services.green_api.instance');
+            $token = config('services.green_api.token');
+            $host = config('services.green_api.host');
+
+            if (!$instance || !$token) {
+                return response()->json(['error' => 'Green API no está configurado correctamente en el servidor'], 500);
+            }
+
+            $mensaje = "Hola {$socio->nombre}, te escribimos desde Neto Boxing Center. Te recordamos que tu cuota vence mañana ({$socio->expiration}). ¡Te esperamos para seguir entrenando!";
+
+            // Realizamos la petición HTTP POST tipo JSON para Green API
+            $url = "{$host}/waInstance{$instance}/sendMessage/{$token}";
+            $response = Http::post($url, [
+                'chatId'  => $telefono,
+                'message' => $mensaje
+            ]);
+
+            if ($response->successful()) {
+                Log::info("Aviso WhatsApp enviado a: {$socio->nombre} ($telefono) via Green API");
+                return response()->json(['success' => true, 'message' => 'WhatsApp enviado con éxito']);
+            } else {
+                throw new \Exception("Green API respondió con error: " . $response->body());
+            }
+            
+        } catch (\Exception $e) {
+            Log::error("Error Green API WhatsApp: " . $e->getMessage());
+            return response()->json(['error' => 'Error al enviar whatsapp: ' . $e->getMessage()], 500);
         }
     }
 

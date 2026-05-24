@@ -15,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Programar el envío de WhatsApp a las 10:00 AM todos los días
+        $schedule->command('app:send-expiration-whats-app')->dailyAt('10:00');
     }
 
     /**

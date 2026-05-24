@@ -42,8 +42,25 @@ Route::middleware('auth')->group(function () {
     // Otras rutas protegidas bajo /admin
 });
 Route::post('/socios/enviar-aviso-email', [AdminController::class, 'enviarAvisoEmail']);
+Route::post('/socios/enviar-whatsapp', [AdminController::class, 'enviarAvisoWhatsapp']);
 // Route::middleware('auth:sanctum')->post("/admin", [AdminController::class, "admin"]);
 Route::post('/socios/ingresos', [AdminController::class, "ingresos"]);
 Route::get('/socios/get_ingresos', function () {
     return DB::table('ingresos')->orderBy('fecha_ingreso', 'desc')->get();
+});
+
+// Ruta manual para disparar los avisos de WhatsApp (puedes usarla desde el navegador)
+Route::get('/socios/run-whatsapp-cron', function() {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('app:send-expiration-whats-app');
+        return response()->json([
+            'message' => 'Comando ejecutado manualmente con éxito.',
+            'output'  => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error'   => 'Error al ejecutar el comando',
+            'details' => $e->getMessage()
+        ], 500);
+    }
 });
