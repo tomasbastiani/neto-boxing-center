@@ -82,7 +82,7 @@
 
       async fetchIngresos() {
         try {
-          const response = await axios.get("https://netoboxingcenter.com.ar/api/socios/get_ingresos");
+          const response = await axios.get(`${process.env.VUE_APP_BACKEND_API_URL}socios/get_ingresos`);
           let ingresosRaw = response.data;
 
           // Filtrar duplicados por dni, nombre, apellido y fecha_ingreso (solo día)

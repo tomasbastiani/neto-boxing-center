@@ -20,6 +20,8 @@
       <div id="mensajeDelete" class="toast-item toast-success" style="display:none;">¡Socio eliminado con éxito!</div>
       <div id="mensajeExito" class="toast-item toast-success" style="display:none;">¡Socio creado con éxito!</div>
       <div id="mensajeUpdate" class="toast-item toast-info" style="display:none;">Socio actualizado con éxito.</div>
+      <div id="mensajeWhatsapp" class="toast-item toast-success" style="display:none;">¡Mensaje de WhatsApp enviado!</div>
+      <div id="mensajeErrorWhatsapp" class="toast-item toast-error" style="display:none;">Error al enviar WhatsApp. (Revisa servidor/código)</div>
     </div>
 
     <!-- Acceso Socio -->
@@ -298,7 +300,7 @@ export default {
   },
   methods: {
     obtenerSociosConExpiracion() {
-      axios.get('https://netoboxingcenter.com.ar/api/socios/expiracion') // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+      axios.get(`${process.env.VUE_APP_BACKEND_API_URL}socios/expiracion`) // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
         .then(response => {
           this.sociosExpiracion = response.data.sociosExpiracion;
           // if (Array.isArray(this.sociosExpiracion)) {
@@ -324,7 +326,7 @@ export default {
       return diferenciaEnDias;
     },
     enviarAvisoEmail(socio) {
-      axios.post('https://netoboxingcenter.com.ar/api/socios/enviar-aviso-email', { // https://netoboxingcenter.com.ar/api/socios/enviar-aviso-email http://localhost:8080
+      axios.post(`${process.env.VUE_APP_BACKEND_API_URL}socios/enviar-aviso-email`, { // https://netoboxingcenter.com.ar/api/socios/enviar-aviso-email http://localhost:8080
         nombre: socio.nombre,
         email: socio.email
       })
@@ -340,7 +342,7 @@ export default {
       if (!user) {
         this.$router.push({ path: '/login' });
       }else {
-      axios.get('https://netoboxingcenter.com.ar/api/socios/get')//https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
+      axios.get(`${process.env.VUE_APP_BACKEND_API_URL}socios/get`)//https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
         .then(response => {
           this.socios = response.data.socios.map(socio => {
             socio.isExpiring = new Date(socio.expiration) > new Date();
@@ -388,7 +390,7 @@ export default {
           this.searchDNI = '';
         }, 4000);
 
-        axios.post('https://netoboxingcenter.com.ar/api/socios/ingresos', ingresoData) //https://netoboxingcenter.com.ar/api/socios/ingresos http://localhost:8080
+        axios.post(`${process.env.VUE_APP_BACKEND_API_URL}socios/ingresos`, ingresoData) //https://netoboxingcenter.com.ar/api/socios/ingresos http://localhost:8080
         .then(response => {
           console.log('Ingreso registrado:', response.data);
         })
@@ -429,7 +431,7 @@ export default {
     //     });
     // },
     crearSocio() {
-        axios.get('https://netoboxingcenter.com.ar/api/socios/get') // https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
+        axios.get(`${process.env.VUE_APP_BACKEND_API_URL}socios/get`) // https://netoboxingcenter.com.ar/api/socios/get http://localhost:8080
           .then(response => {
             const existeSocio = response.data.socios.some(socio => socio.dni === this.socioEditado.dni);
             console.log('existeSocio', existeSocio);
@@ -440,7 +442,7 @@ export default {
               return;
             }
           
-        axios.post('https://netoboxingcenter.com.ar/api/socios/create', this.socioEditado) // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
+        axios.post(`${process.env.VUE_APP_BACKEND_API_URL}socios/create`, this.socioEditado) // https://netoboxingcenter.com.ar/api/socios/create http://localhost:8080
           .then(response => {
             this.mostrarMensajeExito();
             this.exito = true;
@@ -473,7 +475,7 @@ export default {
         this.socioEditado = { ...socio };
       },
       actualizarSocio() {
-      axios.put(`https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}`, this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}
+      axios.put(`${process.env.VUE_APP_BACKEND_API_URL}socios/edit/${this.socioEditado.id}`, this.socioEditado)//https://netoboxingcenter.com.ar/api/socios/edit/${this.socioEditado.id}
         .then(response => {
           this.mostrarMensajeUpdate();
           this.exito = true;
@@ -492,7 +494,7 @@ export default {
         });      
     },
     deleteSocio(id) {
-      axios.delete(`https://netoboxingcenter.com.ar/api/socios/delete/${this.socioEditado.id}`)//https://netoboxingcenter.com.ar/api/socios/delete/${this.socioEditado.id}
+      axios.delete(`${process.env.VUE_APP_BACKEND_API_URL}socios/delete/${this.socioEditado.id}`)//https://netoboxingcenter.com.ar/api/socios/delete/${this.socioEditado.id}
       .then(response => {
         this.mostrarMensajeDelete();
           this.exito = true;
@@ -551,6 +553,13 @@ export default {
       setTimeout(() => {
         document.getElementById('mensajeErrorDNI').style.display = 'none';
       }, 5000); // Ocultar el mensaje después de 5 segundos
+    },
+    mostrarMensajeToast(id) {
+      const el = document.getElementById(id);
+      if(el) {
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+      }
     },
     mostrarTablaSocios() {
       const tabla = document.getElementById('tablaSocios');

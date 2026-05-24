@@ -50,7 +50,8 @@ export default {
         password: this.password,
       };
 
-      axios.post('https://netoboxingcenter.com.ar/api/login', credentials)//https://netoboxingcenter.com.ar/api/login http://localhost:8080
+      const apiUrl = process.env.VUE_APP_BACKEND_API_URL;
+      axios.post(`${apiUrl}login`, credentials)
         .then(response => {
           // let currentRoute = this.$route.path;
           console.log(response.data);
