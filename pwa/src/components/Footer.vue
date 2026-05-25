@@ -12,7 +12,7 @@
             />
           </div>
           <!-- Datos de contacto a la derecha -->
-          <div class="col-md-6 text-right">
+          <div class="col-md-6 text-right text-md-right text-center">
             <div>
               <strong>Dirección:</strong> Av. Diaz Velez 5204 - Av. Gaona 1880
             </div>
@@ -27,7 +27,7 @@
         <hr class="my-4">
         <!-- Texto de copyright -->
         <div class="text-center">
-          <p>&copy; 2024 Neto Boxing Center. Todos los derechos reservados.</p>
+          <p>&copy; {{ currentYear }} Neto Boxing Center. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
@@ -36,6 +36,11 @@
   <script>
   export default {
     name: "FooterComponent",
+    data() {
+      return {
+        currentYear: new Date().getFullYear(),
+      };
+    },
   };
   </script>
   

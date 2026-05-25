@@ -40,6 +40,7 @@ import HomeComponent from '@/components/HomeComponent.vue';
 import LoginComponent from '@/components/intranet/LoginComponent.vue';
 import AdminComponent from '@/components/intranet/AdminComponent.vue';
 import IngresosComponent from '@/components/intranet/IngresosComponent.vue';
+import AccesoComponent from '@/components/intranet/AccesoComponent.vue';
 
 Vue.use(Router);
 
@@ -55,6 +56,7 @@ const router = new Router({
       component: IngresosComponent,
       meta: { requiresAuth: true } // ← ruta protegida
     },
+    { path: '/acceso', name: 'AccesoComponent', component: AccesoComponent },
   ],
 });
 
