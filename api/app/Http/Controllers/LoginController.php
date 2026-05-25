@@ -30,8 +30,8 @@ class LoginController extends Controller
 
             // Verificar si el usuario existe
             if ($user) {
-                // Comparar la contraseña en texto plano
-                if ($request->password == $user->password) {
+                // Comparar la contraseña hasheada
+                if (\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
                     Log::info('Inicio de sesión exitoso para el usuario: ' . $request->username);
                     return response()->json(['success' => 'Credenciales correctas']);
                 } else {
